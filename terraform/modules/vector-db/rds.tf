@@ -20,23 +20,21 @@ resource "aws_db_subnet_group" "vector_db_subnet_group" {
   ]
 }
 
-# Security group: restrict inbound PostgreSQL traffic to the VPC subnets only.
-# The instance is publicly accessible so that operators can connect via psql
-# from outside the VPC; the security group enforces the actual access boundary.
+# Security group for the publicly accessible RDS instance.
+# Inbound PostgreSQL traffic is open to all IPs so that operators can connect
+# directly with psql from any machine (e.g. local workstation or CI runner).
+# In production, restrict cidr_blocks to known office/VPN IP ranges.
 resource "aws_security_group" "vector_db_sg" {
   name        = "${var.project}-vector-db-sg"
-  description = "Allow inbound PostgreSQL traffic from the VPC subnets."
+  description = "Allow inbound PostgreSQL traffic from any IP."
   vpc_id      = var.vpc_id
 
   ingress {
-    description = "PostgreSQL access restricted to VPC subnets"
+    description = "PostgreSQL — open to all IPs for direct psql access"
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = [
-      data.aws_subnet.public_a.cidr_block,
-      data.aws_subnet.public_b.cidr_block,
-    ]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -53,9 +51,8 @@ resource "aws_security_group" "vector_db_sg" {
 }
 
 # RDS PostgreSQL instance with pgvector support.
-# publicly_accessible = true is required so that the psql client can reach the
-# instance endpoint directly. Access is controlled by the security group above,
-# which limits ingress to the VPC subnet CIDR blocks.
+# publicly_accessible = true is required so the RDS endpoint is reachable from
+# outside the VPC. Access is gated by the security group defined above.
 resource "aws_db_instance" "master_db" {
   identifier            = "${var.project}-vector-db"
   allocated_storage     = 20
@@ -71,8 +68,8 @@ resource "aws_db_instance" "master_db" {
   username = var.master_username
   password = random_password.master_password.result
 
-  publicly_accessible  = true  # Controlled by security group — see aws_security_group above
-  skip_final_snapshot  = true  # Set to false in production to retain point-in-time backups
+  publicly_accessible  = true  # Gated by security group above
+  skip_final_snapshot  = true  # Set to false in production to retain backups
   db_subnet_group_name = aws_db_subnet_group.vector_db_subnet_group.id
 
   vpc_security_group_ids = [aws_security_group.vector_db_sg.id]

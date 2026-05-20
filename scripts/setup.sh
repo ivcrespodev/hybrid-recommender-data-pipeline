@@ -125,9 +125,10 @@ TF_VAR_kinesis_stream_arn=$(aws kinesis describe-stream \
 echo "✔  Kinesis stream resolved: ${TF_VAR_kinesis_stream_arn}"
 
 # ------------------------------------------------------------------------------
-# 7. Resolve inference Lambda ARN (pre-provisioned)
-#    Uses get-function instead of get-function-url-config, which requires a
-#    Function URL to be configured and would fail if one is not present.
+# 7. Resolve inference Lambda Function URL (pre-provisioned)
+#    The transformation Lambda calls this as an HTTP endpoint, not by ARN.
+#    The inference Lambda must have a Function URL enabled; if not, the operator
+#    must configure one in the AWS Lambda console before running this script.
 # ------------------------------------------------------------------------------
 INFERENCE_LAMBDA="${PROJECT_PREFIX}-model-inference"
 
@@ -141,12 +142,15 @@ if ! aws lambda get-function \
 fi
 
 export TF_VAR_inference_api_url
-TF_VAR_inference_api_url=$(aws lambda get-function \
+TF_VAR_inference_api_url=$(aws lambda get-function-url-config \
     --function-name "${INFERENCE_LAMBDA}" \
     --output text \
-    --query "Configuration.FunctionArn")
+    --query "FunctionUrl")
 
-echo "✔  Inference Lambda resolved: ${TF_VAR_inference_api_url}"
+# Strip trailing slash so callers can safely append path segments (e.g. /user_embeddings)
+TF_VAR_inference_api_url="${TF_VAR_inference_api_url%/}"
+
+echo "✔  Inference Lambda URL resolved: ${TF_VAR_inference_api_url}"
 
 # ------------------------------------------------------------------------------
 # 8. Export all remaining Terraform input variables

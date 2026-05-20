@@ -11,3 +11,8 @@ output "scripts_bucket_id" {
   description = "Name of the S3 bucket hosting the Glue ETL script."
   value       = var.scripts_bucket
 }
+
+output "glue_connection_name" {
+  description = "Name of the Glue JDBC connection to the source MySQL database."
+  value       = aws_glue_connection.rds_connection.name
+}

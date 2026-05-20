@@ -21,3 +21,5 @@ __pycache__/
 .DS_Store
 Thumbs.db
 Desktop.ini
+# Windows NTFS alternate data streams (generated when downloading files on Windows)
+*:Zone.Identifier

@@ -28,7 +28,8 @@ module "etl" {
 
 # ------------------------------------------------------------------------------
 # Module 2 — Vector Store: PostgreSQL with pgvector
-# Depends on ETL so the data lake exists before the vector DB is populated
+# The Glue JDBC connection (etl module) must exist before the vector DB is
+# created so that the VPC and subnet context is fully established.
 # ------------------------------------------------------------------------------
 module "vector_db" {
   source = "./modules/vector-db"
@@ -40,12 +41,14 @@ module "vector_db" {
   public_subnet_b_id  = var.public_subnet_b_id
   ml_artifacts_bucket = var.ml_artifacts_bucket
 
-  depends_on = [module.etl]
+  depends_on = [module.etl.glue_connection_name]
 }
 
 # ------------------------------------------------------------------------------
 # Module 3 — Hot Path: Real-Time Streaming & Inference
-# Depends on vector_db so embeddings are available before stream processing starts
+# The Firehose delivery stream invokes the transformation Lambda, which calls
+# the inference API backed by the vector DB — so both prior modules must be
+# fully ready before streaming resources are created.
 # ------------------------------------------------------------------------------
 module "streaming_inference" {
   source = "./modules/streaming-inference"
@@ -56,5 +59,5 @@ module "streaming_inference" {
   inference_api_url      = var.inference_api_url
   recommendations_bucket = var.recommendations_bucket
 
-  depends_on = [module.vector_db]
+  depends_on = [module.vector_db.vector_db_host]
 }

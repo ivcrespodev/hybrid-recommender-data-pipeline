@@ -32,12 +32,15 @@ this pipeline. They are managed externally (by platform or data science teams) a
 are **not created by the Terraform code in this repository**.
 
 | Resource | Expected identifier |
-|---|---|
+|---|---|---|
 | RDS MySQL instance (source ODS) | `recommender-system-rds` |
 | MySQL schema | `classicmodels` (includes the `ratings` table) |
 | Kinesis Data Stream | `recommender-system-kinesis-data-stream` |
-| Lambda inference function | `recommender-system-model-inference` |
+| Lambda inference function | `recommender-system-model-inference` (must have a **Function URL** enabled) |
 | S3 ML artifacts bucket | `recommender-system-<ACCOUNT_ID>-<REGION>-ml-artifacts` |
+| S3 Data Lake bucket | `recommender-system-<ACCOUNT_ID>-<REGION>-datalake` |
+| S3 Scripts bucket | `recommender-system-<ACCOUNT_ID>-<REGION>-scripts` |
+| S3 Recommendations bucket | `recommender-system-<ACCOUNT_ID>-<REGION>-recommendations` |
 | VPC with two public subnets | Tagged `Environment=Production`, `Type=PublicA` / `Type=PublicB` |
 
 The ML artifacts bucket contains the following structure, produced by the Data
@@ -128,6 +131,7 @@ Expected output:
 ✔  Inference Lambda resolved: arn:aws:lambda:us-east-1:...
 ✔  Terraform variable context applied successfully.
 INFO: Scripts bucket does not exist yet — Glue script will be uploaded after 'terraform apply'.
+      Re-run setup.sh after apply, or upload manually (see Step 4).
 === Setup completed successfully ===
 ```
 
@@ -145,7 +149,7 @@ terraform apply
 ```
 
 `terraform apply` will provision all three modules in dependency order:
-1. **etl** — Glue catalog, JDBC connection, crawler, job, IAM role, S3 buckets.
+1. **etl** — Glue catalog, JDBC connection, crawler, job, IAM role.
 2. **vector_db** — RDS PostgreSQL instance, subnet group, security group, IAM role.
 3. **streaming_inference** — Firehose delivery stream, transformation Lambda,
    CloudWatch log group, IAM roles.
@@ -284,4 +288,4 @@ terraform destroy
 ```
 
 > This does not affect the pre-provisioned resources (MySQL RDS, Kinesis Data Stream,
-> inference Lambda, or ML artifacts bucket), which are managed externally.
+> inference Lambda, S3 buckets, or the VPC with its subnets), which are managed externally.

@@ -1,14 +1,13 @@
-# ============================================================================
-# Description: External AWS Resource Discovery & Data Fetching Manifest
-# Purpose: Imports existing target network and security contexts into Glue ETL
-# ============================================================================
+# ==============================================================================
+# ETL Module — Data Sources (Network & Security Discovery)
+# ==============================================================================
 
-# 1. Discover operational network boundary topologies for JDBC connectivity
+# Discover the subnet used to attach Glue ENIs for JDBC connectivity
 data "aws_subnet" "public_a" {
   id = var.public_subnet_a_id
 }
 
-# 2. Discover existing database security boundary ingress/egress state
+# Discover the security group attached to the source MySQL instance
 data "aws_security_group" "db_sg" {
   id = var.db_sg_id
 }

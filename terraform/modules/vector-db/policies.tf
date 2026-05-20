@@ -1,10 +1,8 @@
-# ============================================================================
-# Description: Identity & Access Management (IAM) Policy Documents
-# Purpose: Establishes a secure trust relationship boundary for Amazon RDS
-# Scope: Authorizes the RDS engine service principal to assume role actions
-# ============================================================================
+# ==============================================================================
+# Vector DB Module — IAM Policy Documents
+# ==============================================================================
 
-# 1. Define trusted entity configuration permitting standard RDS handshakes
+# Trust policy: allow RDS to assume the S3 import role
 data "aws_iam_policy_document" "rds_assume_role" {
   statement {
     sid    = "AllowRDSToAssumeRole"
@@ -16,5 +14,22 @@ data "aws_iam_policy_document" "rds_assume_role" {
     }
 
     actions = ["sts:AssumeRole"]
+  }
+}
+
+# Permission policy: allow the RDS instance to read embeddings from S3
+# This is required for aws_s3.table_import_from_s3() calls in embeddings.sql
+data "aws_iam_policy_document" "rds_s3_import_policy" {
+  statement {
+    sid    = "AllowS3EmbeddingsRead"
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:ListBucket"
+    ]
+    resources = [
+      "arn:aws:s3:::${var.ml_artifacts_bucket}",
+      "arn:aws:s3:::${var.ml_artifacts_bucket}/*"
+    ]
   }
 }

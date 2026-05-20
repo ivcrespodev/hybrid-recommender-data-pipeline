@@ -1,16 +1,15 @@
-# ============================================================================
-# Description: Global Core Infrastructure Orchestration Manifest
-# System Type: Hybrid Lambda Processing Architecture (Batch & Streaming)
-# Provider Core Constraints: HashiCorp AWS & Archive Modules
-# ============================================================================
+# ==============================================================================
+# Global Infrastructure Orchestration
+# Architecture: Hybrid Lambda Processing (Batch + Streaming)
+# ==============================================================================
 
 provider "aws" {
   region = var.region
 }
 
-# ----------------------------------------------------------------------------
-# 1. Cold Path Layer: Batch Ingestion and Distributed ETL Feature Engineering
-# ----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Module 1 — Cold Path: Batch Ingestion & Distributed ETL
+# ------------------------------------------------------------------------------
 module "etl" {
   source = "./modules/etl"
 
@@ -27,25 +26,27 @@ module "etl" {
   scripts_bucket     = var.scripts_bucket
 }
 
-# ----------------------------------------------------------------------------
-# 2. Storage Analytical Core: Relational Database Instance with Vector Spatial Search
-# ----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Module 2 — Vector Store: PostgreSQL with pgvector
+# Depends on ETL so the data lake exists before the vector DB is populated
+# ------------------------------------------------------------------------------
 module "vector_db" {
   source = "./modules/vector-db"
 
-  project            = var.project
-  region             = var.region
-  vpc_id             = var.vpc_id
-  public_subnet_a_id = var.public_subnet_a_id
-  public_subnet_b_id = var.public_subnet_b_id
+  project             = var.project
+  region              = var.region
+  vpc_id              = var.vpc_id
+  public_subnet_a_id  = var.public_subnet_a_id
+  public_subnet_b_id  = var.public_subnet_b_id
+  ml_artifacts_bucket = var.ml_artifacts_bucket
 
-  # Ensure the baseline operational store contexts are stable before provisioning
   depends_on = [module.etl]
 }
 
-# ----------------------------------------------------------------------------
-# 3. Hot Path Layer: Real-Time Event Ingestion and Serverless Stream Transformation
-# ----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Module 3 — Hot Path: Real-Time Streaming & Inference
+# Depends on vector_db so embeddings are available before stream processing starts
+# ------------------------------------------------------------------------------
 module "streaming_inference" {
   source = "./modules/streaming-inference"
 
@@ -55,6 +56,5 @@ module "streaming_inference" {
   inference_api_url      = var.inference_api_url
   recommendations_bucket = var.recommendations_bucket
 
-  # Restrict creation until the target Vector Database lookup parameters are online
   depends_on = [module.vector_db]
 }

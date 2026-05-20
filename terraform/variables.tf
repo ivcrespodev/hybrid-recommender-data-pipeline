@@ -1,103 +1,102 @@
-# ============================================================================
-# Description: Global Root Infrastructure Variable Declarations (Input Contract)
-# Scope: Centralizes network topologies, source clusters, and target storage sinks
-# ============================================================================
+# ==============================================================================
+# Root Input Variable Declarations
+# ==============================================================================
 
-# ----------------------------------------------------------------------------
-# Core Context Configurations
-# ----------------------------------------------------------------------------
+# --- Core ---
+
 variable "project" {
   type        = string
-  description = "Enterprise deployment namespace prefix used to tag, isolate, and group infrastructure resources globally."
+  description = "Prefix applied to all resource names and tags."
 }
 
 variable "region" {
   type        = string
-  description = "Target geographical AWS Region where the core analytical and streaming nodes will be provisioned."
+  description = "AWS region where all resources will be provisioned."
 }
 
-# ----------------------------------------------------------------------------
-# Network Boundary Configurations
-# ----------------------------------------------------------------------------
+# --- Networking ---
+
 variable "vpc_id" {
   type        = string
-  description = "The central Virtual Private Cloud (VPC) identifier acting as the isolated network boundary for the architecture."
+  description = "ID of the VPC that hosts the pipeline infrastructure."
 }
 
 variable "public_subnet_a_id" {
   type        = string
-  description = "The target public subnet identifier within Availability Zone A utilized for Multi-AZ cluster routing paths."
+  description = "ID of the public subnet in Availability Zone A."
 }
 
 variable "public_subnet_b_id" {
   type        = string
-  description = "The target public subnet identifier within Availability Zone B utilized to fulfill high-availability Multi-AZ configurations."
+  description = "ID of the public subnet in Availability Zone B (required for Multi-AZ RDS)."
 }
 
-# ----------------------------------------------------------------------------
-# Source Operational Store Parameters (MySQL Engine)
-# ----------------------------------------------------------------------------
+# --- Source MySQL Database ---
+
 variable "db_sg_id" {
   type        = string
-  description = "The reference operational security group identifier guarding ingress traffic to the relational data node."
+  description = "Security group ID attached to the source MySQL RDS instance."
 }
 
 variable "source_host" {
   type        = string
-  description = "The network connection string endpoint address of the source transactional database node."
+  description = "Endpoint address of the source MySQL database."
 }
 
 variable "source_port" {
   type        = number
   default     = 3306
-  description = "The network communication port utilized to access the origin database instance (Default: 3306 MySQL)."
+  description = "Port of the source MySQL database."
 }
 
 variable "source_database" {
   type        = string
   default     = "classicmodels"
-  description = "The targeted operational relational database schema container name holding transactional source logs."
+  description = "Database schema name to extract from the source MySQL instance."
 }
 
 variable "source_username" {
   type        = string
   sensitive   = true
-  description = "The administrative connection database user principal account name authorized to extract transactional schemas."
+  description = "Username for the source MySQL database."
 }
 
 variable "source_password" {
   type        = string
   sensitive   = true
-  description = "The secret connection database security credential accompanying the administrative user principal."
+  description = "Password for the source MySQL database."
 }
 
-# ----------------------------------------------------------------------------
-# Streaming and Serverless Context Inputs
-# ----------------------------------------------------------------------------
+# --- Streaming & Inference ---
+
 variable "kinesis_stream_arn" {
   type        = string
-  description = "The Amazon Resource Name (ARN) identifying the upstream Kinesis Data Stream capturing real-time transaction logs."
+  description = "ARN of the upstream Kinesis Data Stream supplying real-time events."
 }
 
 variable "inference_api_url" {
   type        = string
-  description = "The HTTP/HTTPS connection URL endpoint pointing to the remote serverless inference API hosting the machine learning models."
+  description = "URL of the inference Lambda function that serves recommendation vectors."
 }
 
-# ----------------------------------------------------------------------------
-# Centralized S3 Persistence Sinks
-# ----------------------------------------------------------------------------
+# --- S3 Buckets ---
+
+variable "ml_artifacts_bucket" {
+  type        = string
+  description = "Name of the S3 bucket containing pre-computed ML embeddings (managed by the Data Science team)."
+}
+
 variable "data_lake_bucket" {
   type        = string
-  description = "The unique identifier designation mapping the centralized Amazon S3 Data Lake analytical target."
+  description = "Name of the S3 bucket used as the ML training data lake."
 }
 
 variable "scripts_bucket" {
   type        = string
-  description = "The unique identifier mapping the Amazon S3 script repository hosting pipeline engine code."
+  description = "Name of the S3 bucket that stores the Glue ETL script."
 }
 
 variable "recommendations_bucket" {
   type        = string
-  description = "The unique identification name mapping the destination Amazon S3 bucket used as the real-time recommendations data store sink."
+  description = "Name of the S3 bucket where Firehose delivers recommendation payloads."
 }

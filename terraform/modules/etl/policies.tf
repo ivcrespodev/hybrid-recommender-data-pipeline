@@ -1,30 +1,28 @@
-# ============================================================================
-# Description: Fine-Grained IAM Security Policy Document Manifests
-# Security Principle: Principle of Least Privilege (PoLP) for AWS Glue Jobs
-# ============================================================================
+# ==============================================================================
+# ETL Module — IAM Policy Documents
+# ==============================================================================
 
-# 1. Fetch current active deployment account context telemetry
 data "aws_caller_identity" "current" {}
 
-# 2. Define trusted entity service principal relationships for AWS Glue core engine
+# Trust policy: allow AWS Glue to assume the execution role
 data "aws_iam_policy_document" "glue_base_policy" {
   statement {
     sid    = "AllowGlueToAssumeRole"
     effect = "Allow"
 
     principals {
-      identifiers = ["glue.amazonaws.com"]
       type        = "Service"
+      identifiers = ["glue.amazonaws.com"]
     }
 
     actions = ["sts:AssumeRole"]
   }
 }
 
-# 3. Fine-grained authorization boundaries limiting resource mutations
+# Permission policy: least-privilege access for Glue job execution
 data "aws_iam_policy_document" "glue_access_policy" {
-  
-  # Group 1: Telemetry Monitoring and Event Tracking Logging Permissions
+
+  # CloudWatch Logs — write ETL job output and error logs
   statement {
     sid    = "AllowCloudWatchLogsOperations"
     effect = "Allow"
@@ -33,12 +31,10 @@ data "aws_iam_policy_document" "glue_access_policy" {
       "logs:CreateLogStream",
       "logs:PutLogEvents"
     ]
-    resources = [
-      "arn:aws:logs:*:*:log-group:/aws-glue/*"
-    ]
+    resources = ["arn:aws:logs:*:*:log-group:/aws-glue/*"]
   }
 
-  # Group 2: Data Catalog Meta-store Structural Synchronization Permissions
+  # Glue Data Catalog — synchronize schema metadata
   statement {
     sid    = "AllowGlueDataCatalogManagement"
     effect = "Allow"
@@ -53,10 +49,11 @@ data "aws_iam_policy_document" "glue_access_policy" {
       "glue:BatchCreatePartition",
       "glue:BatchGetPartition"
     ]
+    # Glue catalog ARNs do not support resource-level restrictions on these actions
     resources = ["*"]
   }
 
-  # Group 3: Isolated Network interface Attachment and Subnet Topology Discovery
+  # EC2 / VPC — attach ENIs so Glue can reach the MySQL RDS endpoint
   statement {
     sid    = "AllowVPCNetworkInterfaceConfiguration"
     effect = "Allow"
@@ -68,10 +65,11 @@ data "aws_iam_policy_document" "glue_access_policy" {
       "ec2:DescribeSecurityGroups",
       "ec2:DescribeVpcs"
     ]
+    # Describe/Delete ENI actions require * at resource level
     resources = ["*"]
   }
 
-  # Group 4: Restricted Storage Operations bounded to the Data Pipeline boundaries
+  # S3 — read the ETL script and write Parquet output to the data lake
   statement {
     sid    = "AllowTargetS3BucketDataOps"
     effect = "Allow"

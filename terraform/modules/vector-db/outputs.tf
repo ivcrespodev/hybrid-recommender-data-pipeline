@@ -1,26 +1,25 @@
-# ============================================================================
-# Description: Vector Database Module Resource Exposure Output Declarations
-# Purpose: Exports critical connection parameters to the root orchestration layer
-# ============================================================================
+# ==============================================================================
+# Vector DB Module — Output Declarations
+# ==============================================================================
 
 output "vector_db_master_username" {
-  description = "The master administrative database user principal account name authorized to manage schemas."
+  description = "Master username of the PostgreSQL vector database."
   value       = var.master_username
   sensitive   = true
 }
 
 output "vector_db_master_password" {
-  description = "The cryptographically generated secret master administrative database password credential."
-  value       = random_id.master_password.id
+  description = "Auto-generated master password of the PostgreSQL vector database."
+  value       = random_password.master_password.result
   sensitive   = true
 }
 
 output "vector_db_host" {
-  description = "The connection network address endpoint string pointing to the active provisioned database instance."
+  description = "Endpoint address of the PostgreSQL vector database instance."
   value       = aws_db_instance.master_db.address
 }
 
 output "vector_db_port" {
-  description = "The target network communication port designated to route traffic into the relational vector store."
+  description = "Port of the PostgreSQL vector database instance."
   value       = aws_db_instance.master_db.port
 }

@@ -1,15 +1,14 @@
-# ============================================================================
-# Description: AWS Glue Catalog & ETL Data Pipeline Configurations
-# Target Layer: Batch Processing / Historical Data Lakes
-# Data Governance: Analytics Data Catalog Database
-# ============================================================================
+# ==============================================================================
+# ETL Module — AWS Glue Catalog, Connection, Crawler & Job
+# ==============================================================================
 
+# Glue Data Catalog database for ML training schemas
 resource "aws_glue_catalog_database" "ml_database" {
   name        = "${var.project}-analytics-catalog"
-  description = "Central analytical database catalog storing transformed schemas for machine learning model training pipelines."
+  description = "Catalog database storing transformed schemas for ML model training."
 }
 
-# 1. Establish secure network link to the Operational MySQL Database Instance
+# JDBC connection to the source MySQL operational database
 resource "aws_glue_connection" "rds_connection" {
   name = "${var.project}-relational-store-link"
 
@@ -26,13 +25,14 @@ resource "aws_glue_connection" "rds_connection" {
   }
 }
 
-# 2. Schema Discovery Crawler mapping vectorized training files to the Glue Data Catalog
+# Crawler that keeps the Glue Data Catalog in sync with new S3 partitions
 resource "aws_glue_crawler" "s3_crawler" {
   name          = "${var.project}-training-data-crawler"
   database_name = aws_glue_catalog_database.ml_database.name
   role          = aws_iam_role.glue_role.arn
 
   s3_target {
+    # Must match the output path written by the Glue job (see etl-job.py)
     path = "s3://${var.data_lake_bucket}/ratings_ml_training"
   }
 
@@ -46,7 +46,7 @@ resource "aws_glue_crawler" "s3_crawler" {
   }
 }
 
-# 3. Distributed PySpark ETL Workload Orchestrator
+# Distributed PySpark ETL job
 resource "aws_glue_job" "etl_job" {
   name         = "${var.project}-batch-etl-orchestrator"
   role_arn     = aws_iam_role.glue_role.arn
@@ -67,9 +67,8 @@ resource "aws_glue_job" "etl_job" {
     "--target_path"         = "s3://${var.data_lake_bucket}"
   }
 
-  timeout = 5
-
-  # Computing cluster optimization metrics for parallel Spark executions
+  # Maximum runtime in minutes before the job is forcefully terminated
+  timeout           = 5
   number_of_workers = 2
   worker_type       = "G.1X"
 }

@@ -1,29 +1,28 @@
-# ============================================================================
-# Description: Streaming Inference Variable Definitions & Input Contract
-# Scope: Configures serverless anchors, streaming links, and delivery buckets
-# ============================================================================
+# ==============================================================================
+# Streaming Inference Module — Input Variable Declarations
+# ==============================================================================
 
 variable "project" {
   type        = string
-  description = "Enterprise deployment namespace prefix used to tag and isolate streaming infrastructure resources."
+  description = "Prefix applied to all resource names and tags."
 }
 
 variable "region" {
   type        = string
-  description = "Target geographical AWS Region where the streaming architecture nodes will be allocated."
+  description = "AWS region where streaming resources are provisioned."
 }
 
 variable "kinesis_stream_arn" {
   type        = string
-  description = "The Amazon Resource Name (ARN) identifying the upstream Kinesis Data Stream capturing real-time transaction logs."
+  description = "ARN of the upstream Kinesis Data Stream supplying real-time events."
 }
 
 variable "inference_api_url" {
   type        = string
-  description = "The HTTP/HTTPS connection URL endpoint pointing to the remote serverless inference API hosting the machine learning models."
+  description = "URL of the inference Lambda function that serves recommendation vectors."
 }
 
 variable "recommendations_bucket" {
   type        = string
-  description = "The unique identification name mapping the destination Amazon S3 bucket used as the real-time recommendations data store sink."
+  description = "Name of the S3 bucket where Firehose delivers recommendation payloads."
 }

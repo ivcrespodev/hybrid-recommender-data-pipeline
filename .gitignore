@@ -1,8 +1,3 @@
-# === Windows System Files ===
-Thumbs.db
-Desktop.ini
-.DS_Store
-
 # === Credentials & Environments ===
 .env
 .env.production
@@ -21,3 +16,8 @@ data/*
 *.log
 .pytest_cache/
 __pycache__/
+
+# === OS & Editor Artifacts ===
+.DS_Store
+Thumbs.db
+Desktop.ini

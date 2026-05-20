@@ -1,26 +1,39 @@
-# ============================================================================
-# Description: Terraform Core Backend Infrastructure State Configuration
-# Target: Local Execution Directory State Storage
-# Security Note: State files are explicitly filtered in the active .gitignore
-# ============================================================================
+# ==============================================================================
+# Terraform Core Configuration
+# Backend: Local state storage (suitable for development and single-operator use)
+# Note:    State files are excluded from version control via .gitignore
+#
+# To migrate to a remote backend for team environments, replace the local block
+# with the S3 configuration below:
+#
+#   backend "s3" {
+#     bucket         = "recommender-system-global-infrastructure-state"
+#     key            = "environments/production/terraform.tfstate"
+#     region         = "us-east-1"
+#     dynamodb_table = "infrastructure-state-locking-table"
+#     encrypt        = true
+#   }
+# ==============================================================================
 
 terraform {
-  # Local backend topology optimized for deployment isolation and isolated development
   backend "local" {
     path = "./terraform.tfstate"
   }
 
-  # --------------------------------------------------------------------------
-  # Production Migration Blueprint Note:
-  # In enterprise-grade architectures, uncomment and transition to a remote 
-  # S3 backend state database equipped with state locking mechanisms:
-  #
-  # backend "s3" {
-  #   bucket         = "recommender-system-global-infrastructure-state"
-  #   key            = "environments/production/terraform.tfstate"
-  #   region         = "us-east-1"
-  #   dynamodb_table = "infrastructure-state-locking-table"
-  #   encrypt        = true
-  # }
-  # --------------------------------------------------------------------------
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5"
+    }
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.4"
+    }
+  }
+
+  required_version = ">= 1.5.0"
 }
